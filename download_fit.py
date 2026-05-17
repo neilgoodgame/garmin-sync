@@ -3,8 +3,10 @@
 
 import argparse
 import getpass
+import io
 import os
 import sys
+import zipfile
 
 from garminconnect import Garmin, GarminConnectAuthenticationError, GarminConnectTooManyRequestsError
 
@@ -99,7 +101,14 @@ def main():
     print(f"Latest activity: {activity_name} ({activity_date}), ID: {activity_id}")
 
     print("Downloading FIT file...")
-    fit_data = api.download_activity(activity_id, dl_fmt=api.ActivityDownloadFormat.ORIGINAL)
+    zip_data = api.download_activity(activity_id, dl_fmt=api.ActivityDownloadFormat.ORIGINAL)
+
+    with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
+        fit_names = [n for n in zf.namelist() if n.lower().endswith(".fit")]
+        if not fit_names:
+            print("No .fit file found inside the downloaded archive.", file=sys.stderr)
+            sys.exit(1)
+        fit_data = zf.read(fit_names[0])
 
     output_path = args.output or f"{activity_id}.fit"
     with open(output_path, "wb") as f:
