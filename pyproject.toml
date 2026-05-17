@@ -1,0 +1,19 @@
+[project]
+name = "garmin-sync"
+version = "0.1.0"
+description = "Download FIT files from Garmin Connect"
+authors = [
+    {name = "Neil Goodgame",email = "neil.goodgame@gmail.com"}
+]
+requires-python = ">=3.12"
+dependencies = [
+    "garminconnect (>=0.3.3,<0.4.0)"
+]
+
+[project.scripts]
+download-fit = "download_fit:main"
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
