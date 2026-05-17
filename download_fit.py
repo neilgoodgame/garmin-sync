@@ -34,8 +34,7 @@ def parse_args():
         help="Garmin Connect password (or set GARMIN_PASSWORD env var)",
     )
     parser.add_argument(
-        "--output",
-        "-o",
+        "--output", "-o",
         default=None,
         help="Output file path (default: <activity_id>.fit)",
     )
@@ -55,47 +54,32 @@ def prompt_credentials(email, password):
     return email, password
 
 
-def login_with_credentials(email, password):
-    api = Garmin(email=email, password=password, is_cn=False, return_on_mfa=True)
-    api.garth.sess.headers.update({"User-Agent": BROWSER_UA})
-
-    result, data = api.login()
-
-    if result == "needs_mfa":
-        mfa_code = input("MFA/2FA code: ").strip()
-        api.resume_login(data, mfa_code)
-
-    os.makedirs(TOKEN_DIR, exist_ok=True)
-    api.garth.dump(TOKEN_DIR)
-    print(f"Tokens cached to {TOKEN_DIR}")
-    return api
-
-
-def load_cached_tokens():
-    api = Garmin()
-    api.garth.load(TOKEN_DIR)
-    api.garth.sess.headers.update({"User-Agent": BROWSER_UA})
-    return api
-
-
 def get_api(args):
-    if not args.reauth and os.path.isdir(TOKEN_DIR) and os.listdir(TOKEN_DIR):
-        try:
-            print(f"Loading cached tokens from {TOKEN_DIR}...")
-            return load_cached_tokens()
-        except Exception:
-            print("Cached tokens invalid or expired — logging in fresh.")
-
     email, password = prompt_credentials(args.email, args.password)
+
+    api = Garmin(email=email, password=password, return_on_mfa=True)
+    api.client.cs.headers.update({"User-Agent": BROWSER_UA})
+
+    tokenstore = None if args.reauth else TOKEN_DIR
+
     print("Logging in to Garmin Connect...")
     try:
-        return login_with_credentials(email, password)
+        result, data = api.login(tokenstore=tokenstore)
     except GarminConnectAuthenticationError as e:
         print(f"Authentication failed: {e}", file=sys.stderr)
         sys.exit(1)
     except GarminConnectTooManyRequestsError:
         print("Too many requests — try again later.", file=sys.stderr)
         sys.exit(1)
+
+    if result == "needs_mfa":
+        mfa_code = input("MFA/2FA code: ").strip()
+        api.resume_login(data, mfa_code)
+        os.makedirs(TOKEN_DIR, exist_ok=True)
+        api.client.dump(TOKEN_DIR)
+        print(f"Tokens cached to {TOKEN_DIR}")
+
+    return api
 
 
 def main():

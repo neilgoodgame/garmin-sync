@@ -10,9 +10,10 @@ dependencies = [
     "garminconnect (>=0.3.3,<0.4.0)"
 ]
 
-[project.scripts]
-download-fit = "download_fit:main"
 
+
+[tool.poetry]
+package-mode = false
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
