@@ -34,7 +34,8 @@ garmin-sync -o my_run.fit
 |------|-------------|
 | `--email` | Garmin Connect email (or `GARMIN_EMAIL` env var) |
 | `--password` | Garmin Connect password (or `GARMIN_PASSWORD` env var) |
-| `-o`, `--output` | Output file path (default: `<activity_id>.fit`) |
+| `-o`, `--output` | Output file path (default: `<activity_id>.fit`); ignored when `--recent` > 1 |
+| `--recent N` | Download the N most recent activities (default: 1) |
 | `--reauth` | Force re-authentication, ignoring cached tokens |
 
 ## Authentication
