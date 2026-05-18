@@ -77,9 +77,10 @@ def get_api(args):
     if result == "needs_mfa":
         mfa_code = input("MFA/2FA code: ").strip()
         api.resume_login(data, mfa_code)
-        os.makedirs(TOKEN_DIR, exist_ok=True)
-        api.client.dump(TOKEN_DIR)
-        print(f"Tokens cached to {TOKEN_DIR}")
+
+    os.makedirs(TOKEN_DIR, exist_ok=True)
+    api.client.dump(TOKEN_DIR)
+    print(f"Tokens cached to {TOKEN_DIR}")
 
     return api
 
