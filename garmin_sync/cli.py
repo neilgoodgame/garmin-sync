@@ -129,7 +129,11 @@ def main():
             fit_data = zf.read(fit_names[0])
 
         filename = (args.output if args.recent == 1 else None) or f"{activity_id}.fit"
-        output_path = os.path.join(args.output_dir, filename) if args.output_dir else filename
+        if args.output_dir:
+            os.makedirs(args.output_dir, exist_ok=True)
+            output_path = os.path.join(args.output_dir, filename)
+        else:
+            output_path = filename
         with open(output_path, "wb") as f:
             f.write(fit_data)
         print(f"  Saved to: {output_path}")
