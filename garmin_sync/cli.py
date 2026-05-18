@@ -57,12 +57,16 @@ def prompt_credentials(email, password):
 
 
 def get_api(args):
-    email, password = prompt_credentials(args.email, args.password)
+    tokenstore = None if args.reauth else TOKEN_DIR
+    has_tokens = bool(tokenstore and os.path.isdir(tokenstore) and os.listdir(tokenstore))
+
+    if has_tokens:
+        email, password = args.email or "", args.password or ""
+    else:
+        email, password = prompt_credentials(args.email, args.password)
 
     api = Garmin(email=email, password=password, return_on_mfa=True)
     api.client.cs.headers.update({"User-Agent": BROWSER_UA})
-
-    tokenstore = None if args.reauth else TOKEN_DIR
 
     print("Logging in to Garmin Connect...")
     try:
