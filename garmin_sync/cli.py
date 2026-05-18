@@ -41,6 +41,12 @@ def parse_args():
         help="Output file path (default: <activity_id>.fit); ignored when --recent > 1",
     )
     parser.add_argument(
+        "--output-dir", "-d",
+        default=None,
+        metavar="DIR",
+        help="Directory to save FIT files (default: current directory)",
+    )
+    parser.add_argument(
         "--recent",
         type=int,
         default=1,
@@ -122,7 +128,8 @@ def main():
                 continue
             fit_data = zf.read(fit_names[0])
 
-        output_path = (args.output if args.recent == 1 else None) or f"{activity_id}.fit"
+        filename = (args.output if args.recent == 1 else None) or f"{activity_id}.fit"
+        output_path = os.path.join(args.output_dir, filename) if args.output_dir else filename
         with open(output_path, "wb") as f:
             f.write(fit_data)
         print(f"  Saved to: {output_path}")
