@@ -38,7 +38,14 @@ def parse_args():
     parser.add_argument(
         "--output", "-o",
         default=None,
-        help="Output file path (default: <activity_id>.fit)",
+        help="Output file path (default: <activity_id>.fit); ignored when --recent > 1",
+    )
+    parser.add_argument(
+        "--recent",
+        type=int,
+        default=1,
+        metavar="N",
+        help="Download the N most recent activities (default: 1)",
     )
     parser.add_argument(
         "--reauth",
@@ -93,33 +100,32 @@ def main():
     args = parse_args()
     api = get_api(args)
 
-    print("Fetching latest activity...")
-    activities = api.get_activities(0, 1)
+    print(f"Fetching {args.recent} most recent activit{'y' if args.recent == 1 else 'ies'}...")
+    activities = api.get_activities(0, args.recent)
     if not activities:
         print("No activities found.", file=sys.stderr)
         sys.exit(1)
 
-    activity = activities[0]
-    activity_id = activity["activityId"]
-    activity_name = activity.get("activityName", "Unknown")
-    activity_date = activity.get("startTimeLocal", "Unknown date")
-    print(f"Latest activity: {activity_name} ({activity_date}), ID: {activity_id}")
+    for i, activity in enumerate(activities):
+        activity_id = activity["activityId"]
+        activity_name = activity.get("activityName", "Unknown")
+        activity_date = activity.get("startTimeLocal", "Unknown date")
+        print(f"[{i + 1}/{len(activities)}] {activity_name} ({activity_date}), ID: {activity_id}")
 
-    print("Downloading FIT file...")
-    zip_data = api.download_activity(activity_id, dl_fmt=api.ActivityDownloadFormat.ORIGINAL)
+        print("  Downloading FIT file...")
+        zip_data = api.download_activity(activity_id, dl_fmt=api.ActivityDownloadFormat.ORIGINAL)
 
-    with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
-        fit_names = [n for n in zf.namelist() if n.lower().endswith(".fit")]
-        if not fit_names:
-            print("No .fit file found inside the downloaded archive.", file=sys.stderr)
-            sys.exit(1)
-        fit_data = zf.read(fit_names[0])
+        with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
+            fit_names = [n for n in zf.namelist() if n.lower().endswith(".fit")]
+            if not fit_names:
+                print(f"  No .fit file found in archive for activity {activity_id}.", file=sys.stderr)
+                continue
+            fit_data = zf.read(fit_names[0])
 
-    output_path = args.output or f"{activity_id}.fit"
-    with open(output_path, "wb") as f:
-        f.write(fit_data)
-
-    print(f"Saved to: {output_path}")
+        output_path = (args.output if args.recent == 1 else None) or f"{activity_id}.fit"
+        with open(output_path, "wb") as f:
+            f.write(fit_data)
+        print(f"  Saved to: {output_path}")
 
 
 if __name__ == "__main__":
